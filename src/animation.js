@@ -283,17 +283,11 @@ Animation.prototype.draw_bees = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.beeGenerator.createRandomBeesInterval(animation_time_integer, 2000);
+    this.beeGenerator.createRandomBeesInterval(animation_time_integer, 1000);
     for (var i=0;i<this.beeGenerator.bees.length;i++) {
         var bee = this.beeGenerator.bees[i];
-        console.log(bee.x0);
-        console.log(bee.y0);
-        console.log(bee.z0);
-        console.log(bee.creationTime);
-        console.log(bee.lifeTime);
 
         this.draw_bee(model_transform, bee.x0, bee.y0, bee.z0, bee.creationTime, bee.lifeTime);
-
     }
 }
 
@@ -302,14 +296,14 @@ Animation.prototype.draw_bee = function (model_transform, x0, y0, z0, creation_t
     if (this.graphicsState.animation_time < creation_time) return model_transform;
     if (this.graphicsState.animation_time > creation_time+life_time) return model_transform;
 
-    var SCALE = 0.25;
+    var SCALE = 0.1;
 
     var MAT_HEAD = new Material(Color(0.1, 0.1, 0.2, 1), 1, 1, 1, 255);
     var MAT_BODY = new Material(Color(0.2, 0.2, 0.2, 1), 1, 1, 1, 255);
     var MAT_TAIL = new Material(Color(0.3, 0.3, 0, 1), 1, 1, 1, 255);
 
     // calculate position
-    var t = this.graphicsState.animation_time / life_time;
+    var t = (this.graphicsState.animation_time - creation_time) / life_time;
     var x1 = x0 + t*(-x0);
     var y1 = y0 + t*(-y0);
     var z1 = z0 + t*(-z0);
