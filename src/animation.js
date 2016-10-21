@@ -191,9 +191,8 @@ Animation.prototype.display = function(time)
 
     var ground_transform = this.draw_ground(mult(model_transform, translation(0, -5, 0)));
     var tree_transform = this.draw_tree(mult(ground_transform, translation(2, 0, 2)));
-
-    var bees = [];
     this.draw_bees(tree_transform);
+    this.draw_focus(tree_transform);
 }
 
 // *******************************************************	
@@ -412,3 +411,34 @@ Animation.prototype.draw_wing = function (model_transform) {
 
     return model_transform;
 };
+
+// *** Focus ***
+// Draw a focus for sniper
+Animation.prototype.draw_focus = function (model_transform) {
+    var R = 1;  // Radius
+    var D = 2;  // Distance from origin
+    var MAT1 = new Material(Color(1, 0, 0, 1), 1, 1, 1, 255);
+    var MAT2 = new Material(Color(0, 1, 0, 1), 1, 1, 1, 255);
+
+    var focus_tranform = model_transform;
+    focus_tranform = mult(focus_tranform, rotation(this.graphicsState.animation_time/50,1,1,1));
+    focus_tranform = mult(focus_tranform, translation(0, D, 0));
+
+    var ring1_transform = focus_tranform;
+    ring1_transform = mult(ring1_transform, scale(R, R/8, R));
+    ring1_transform = mult(ring1_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring1_transform, MAT1);
+
+    var ring2_transform = focus_tranform;
+    ring2_transform = mult(ring2_transform, scale(R*0.7, R/8, R*0.7));
+    ring2_transform = mult(ring2_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring2_transform, MAT2);
+
+    var ring3_transform = focus_tranform;
+    ring3_transform = mult(ring3_transform, scale(R*0.4, R/8, R*0.4));
+    ring3_transform = mult(ring3_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring3_transform, MAT1);
+
+    return model_transform;
+}
+
