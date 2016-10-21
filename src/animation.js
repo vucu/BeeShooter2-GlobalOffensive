@@ -62,6 +62,7 @@ function Animation()    // A class.  An example of a displayable object that our
 
         // Custom
         self.beeGenerator = new BeeGenerator();
+        self.world = new World();
 
         self.context.render();
     } ) ( this );
@@ -193,6 +194,7 @@ Animation.prototype.display = function(time)
     var tree_transform = this.draw_tree(mult(ground_transform, translation(2, 0, 2)));
     this.draw_bees(tree_transform);
     this.draw_focus(tree_transform);
+    this.draw_bullets(tree_transform);
 }
 
 // *******************************************************	
@@ -315,7 +317,7 @@ Animation.prototype.draw_bee = function (model_transform, x0, y0, z0, creation_t
     var v0 = vec3(-x0,-y0,-z0);
     var initial_axis = vec3(0,0,1); 					// Initial axix bee facing
     var destination_axix = cross(v0, initial_axis);
-    var destination_angle = angle_vec(v0, initial_axis)
+    var destination_angle = angle_vec(v0, initial_axis);
     var bee_tranform = mult(bee_tranform, rotation(-destination_angle, destination_axix[0], destination_axix[1], destination_axix[2]));
 
     // Scale bee
@@ -415,30 +417,68 @@ Animation.prototype.draw_wing = function (model_transform) {
 // *** Focus ***
 // Draw a focus for sniper
 Animation.prototype.draw_focus = function (model_transform) {
-    var R = 1;  // Radius
-    var D = 2;  // Distance from origin
+    var focus = this.world.focus;
+    focus.move(1/100,1/100);
+
     var MAT1 = new Material(Color(1, 0, 0, 1), 1, 1, 1, 255);
     var MAT2 = new Material(Color(0, 1, 0, 1), 1, 1, 1, 255);
 
     var focus_tranform = model_transform;
-    focus_tranform = mult(focus_tranform, rotation(this.graphicsState.animation_time/50,1,1,1));
-    focus_tranform = mult(focus_tranform, translation(0, D, 0));
+    var rotation_info = focus.getRotation();
+    focus_tranform = mult(focus_tranform, translation(focus.x, focus.y, focus.z));
+    focus_tranform = mult(focus_tranform, rotation(rotation_info[0],rotation_info[1],rotation_info[2],rotation_info[3]));
 
     var ring1_transform = focus_tranform;
-    ring1_transform = mult(ring1_transform, scale(R, R/8, R));
+    ring1_transform = mult(ring1_transform, scale(focus.r, focus.r/8, focus.r));
     ring1_transform = mult(ring1_transform, rotation(90,1,0,0));
     this.m_cylinder.draw(this.graphicsState, ring1_transform, MAT1);
 
     var ring2_transform = focus_tranform;
-    ring2_transform = mult(ring2_transform, scale(R*0.7, R/8, R*0.7));
+    ring2_transform = mult(ring2_transform, scale(focus.r*0.7, focus.r/8, focus.r*0.7));
     ring2_transform = mult(ring2_transform, rotation(90,1,0,0));
     this.m_cylinder.draw(this.graphicsState, ring2_transform, MAT2);
 
     var ring3_transform = focus_tranform;
-    ring3_transform = mult(ring3_transform, scale(R*0.4, R/8, R*0.4));
+    ring3_transform = mult(ring3_transform, scale(focus.r*0.4, focus.r/8, focus.r*0.4));
     ring3_transform = mult(ring3_transform, rotation(90,1,0,0));
     this.m_cylinder.draw(this.graphicsState, ring3_transform, MAT1);
 
     return model_transform;
 }
+
+// Draw bullets
+Animation.prototype.draw_bullets = function (model_transform) {
+    var animation_time_integer = Math.round(this.graphicsState.animation_time);
+    if (animation_time_integer===0) return model_transform;
+
+    this.world.createRandomBulletsInterval(animation_time_integer, 1000);
+    for (var i=0;i<this.world.bullets.length;i++) {
+        var bullet = this.world.bullets[i];
+        this.draw_bullet(model_transform, bullet.x0, bullet.y0, bullet.z0, bullet.creationTime, bullet.lifeTime);
+    }
+}
+
+// Draw a bullet flying from initial (x0,y0,z0) to infinity
+Animation.prototype.draw_bullet = function (model_transform, x0, y0, z0, creation_time, life_time) {
+    if (this.graphicsState.animation_time < creation_time) return model_transform;
+    if (this.graphicsState.animation_time > creation_time+life_time) return model_transform;
+
+    var R = 0.1;
+    var MAT = new Material(Color(0.5, 0.5, 0.5, 1), 1, 1, 1, 255);
+
+    // calculate position
+    var t = (this.graphicsState.animation_time - creation_time) / 100;
+    var x1 = x0 + t*(x0);
+    var y1 = y0 + t*(y0);
+    var z1 = z0 + t*(z0);
+
+    // Fly to infinity
+    var bullet_tranform = model_transform;
+    var bullet_tranform = mult(bullet_tranform, translation(x1, y1, z1));
+
+    bullet_tranform = mult(bullet_tranform, scale(R, R, R));
+    this.m_sphere.draw(this.graphicsState, bullet_tranform, MAT);
+    return model_transform;
+}
+
 
