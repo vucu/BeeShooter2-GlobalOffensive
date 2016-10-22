@@ -194,6 +194,8 @@ Animation.prototype.display = function(time)
     this.draw_bees(tree_transform);
     this.draw_focus(tree_transform);
     this.draw_bullets(tree_transform);
+
+    this.world.stepUpdate(this.graphicsState.animation_time);
 }
 
 // *******************************************************	
@@ -450,7 +452,7 @@ Animation.prototype.draw_bullets = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.world.createRandomBulletsInterval(animation_time_integer, 1000);
+    this.world.createRandomBulletsInterval(animation_time_integer, 250);
     for (var i=0;i<this.world.bullets.length;i++) {
         var bullet = this.world.bullets[i];
         this.draw_bullet(model_transform, bullet.x0, bullet.y0, bullet.z0, bullet.creationTime, bullet.lifeTime);

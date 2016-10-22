@@ -1,3 +1,7 @@
+//----------------------------------------------------------------------------
+//
+//  World
+//
 function World() {
     ( function init( self )
     {
@@ -8,6 +12,59 @@ function World() {
         self.lastCreatedBullet = 0;
         self.lastCreatedBee = 0;
     } ) ( this );
+}
+
+World.prototype.stepUpdate = function (currentTime) {
+    for (var i=0; i<this.bullets.length; i++) {
+        this.bullets[i].stepUpdate(currentTime);
+    }
+
+    for (var i=0; i<this.bees.length; i++) {
+        this.bees[i].stepUpdate(currentTime);
+    }
+
+    this.detectCollision();
+}
+
+World.prototype.detectCollision = function () {
+
+    // Collision between bullet and bee
+    for (var i=0; i<this.bullets.length; i++) {
+        for (var j=0; j<this.bees.length; j++) {
+            var bullet = this.bullets[i];
+            var bee = this.bees[j];
+
+            var d = (bullet.x-bee.x)*(bullet.x-bee.x)
+                + (bullet.y-bee.y)*(bullet.y-bee.y)
+                + (bullet.z-bee.z)*(bullet.z-bee.z);
+            
+            if (d<1) {
+                console.log("detected!")
+                bee.shouldBeDeleted = true;
+                bullet.shouldBeDeleted = true;
+            }
+        }
+    }
+
+    this.cleanup();
+}
+
+World.prototype.cleanup = function () {
+    var a = [];
+    for (var i=0; i<this.bullets.length; i++) {
+       if (!this.bullets[i].shouldBeDeleted) {
+           a.push(this.bullets[i]);
+       }
+    }
+    this.bullets = a;
+
+    var a = [];
+    for (var i=0; i<this.bees.length; i++) {
+        if (!this.bees[i].shouldBeDeleted) {
+            a.push(this.bees[i]);
+        }
+    }
+    this.bees = a;
 }
 
 // Create a bullet at Focus's position
@@ -53,6 +110,10 @@ World.prototype.createRandomBeesInterval = function (current_time, period) {
     }
 }
 
+//----------------------------------------------------------------------------
+//
+//  Focus
+//
 function Focus() {
     ( function init( self )
     {
@@ -93,6 +154,10 @@ Focus.prototype.getRotation = function () {
     return rotation_info;
 }
 
+//----------------------------------------------------------------------------
+//
+//  Bullet
+//
 function Bullet(x0, y0, z0, creationTime, lifeTime) {
     ( function init( self )
     {
@@ -101,9 +166,24 @@ function Bullet(x0, y0, z0, creationTime, lifeTime) {
         self.z0 = z0;
         self.creationTime = creationTime;
         self.lifeTime = lifeTime;
+
+        self.shouldBeDeleted = false;
     } ) ( this );
 }
 
+Bullet.prototype.stepUpdate = function(currentTime) {
+    if (currentTime > this.creationTime+this.lifeTime) this.shouldBeDeleted = true;
+
+    var t = (currentTime - this.creationTime) / 100;
+    this.x = this.x0 + t*(this.x0);
+    this.y = this.y0 + t*(this.y0);
+    this.z = this.z0 + t*(this.z0);
+}
+
+//----------------------------------------------------------------------------
+//
+//  Bee
+//
 // A Bee is defined by initial position (x0, y0, z0), destination position (x1, y1, z1), creation time
 // and it's life time
 function Bee(x0, y0, z0, creationTime, lifeTime) {
@@ -114,5 +194,16 @@ function Bee(x0, y0, z0, creationTime, lifeTime) {
         self.z0 = z0;
         self.creationTime = creationTime;
         self.lifeTime = lifeTime;
+
+        self.shouldBeDeleted = false;
     } ) ( this );
+}
+
+Bee.prototype.stepUpdate = function(currentTime) {
+    if (currentTime > this.creationTime+this.lifeTime) this.shouldBeDeleted = true;
+
+    var t = (currentTime - this.creationTime) / this.lifeTime;
+    this.x = this.x0 + t*(-this.x0);
+    this.y = this.y0 + t*(-this.y0);
+    this.z = this.z0 + t*(-this.z0);
 }
