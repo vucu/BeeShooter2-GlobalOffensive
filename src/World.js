@@ -148,8 +148,6 @@ Focus.prototype.move = function (thetaChange, phiChange) {
         this.calculateXYZ();
         return;
     }
-
-    console.log(this.x,this.y,this.z,this.x*this.x+this.y*this.y+this.z+this.z);
 }
 
 Focus.prototype.getRotation = function () {

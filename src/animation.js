@@ -30,7 +30,7 @@ function CURRENT_BASIS_IS_WORTH_SHOWING(self, model_transform) { self.m_axis.dra
 // *******************************************************
 // IMPORTANT -- In the line below, add the filenames of any new images you want to include for textures!
 
-var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif" ];
+var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif", "desert.gif", "desert_texture.jpg" ];
 
 window.onload = function init() {	var anim = new Animation();	}   // Our whole program's entry point
 
@@ -41,8 +41,10 @@ function Animation()    // A class.  An example of a displayable object that our
 {
     ( function init( self )
     {
-        self.context = new GL_Context( "gl-canvas", Color( 0, 0, 0, 1 ) );    // Set your background color here
+        self.context = new GL_Context( "gl-canvas", Color( 0.65, 0.67, 0.62, 1 ) );    // Set your background color here
         self.context.register_display_object( self );
+
+        gl.clearColor(0.65, 0.67, 0.62, 1);			// Background color (above function don't alway work)
 
         shaders = { "Default":     new Shader( "vertex-shader-id", "fragment-shader-id" ),
             "Demo_Shader": new Shader( "vertex-shader-id", "demo-shader-id"     )  };
@@ -116,29 +118,29 @@ Animation.prototype.update_strings = function( debug_screen_strings )	      // S
 function update_camera( self, animation_delta_time )
 {
     /*
-    var leeway = 70,  degrees_per_frame = .0004 * animation_delta_time,
-        meters_per_frame  =   .01 * animation_delta_time;
+     var leeway = 70,  degrees_per_frame = .0004 * animation_delta_time,
+     meters_per_frame  =   .01 * animation_delta_time;
 
-    if( self.mouse.anchor ) // Dragging mode: Is a mouse drag occurring?
-    {
-        var dragging_vector = subtract( self.mouse.from_center, self.mouse.anchor);           // Arcball camera: Spin the scene around the world origin on a user-determined axis.
-        if( length( dragging_vector ) > 0 )
-            self.graphicsState.camera_transform = mult( self.graphicsState.camera_transform,    // Post-multiply so we rotate the scene instead of the camera.
-                mult( translation(origin),
-                    mult( rotation( .05 * length( dragging_vector ), dragging_vector[1], dragging_vector[0], 0 ),
-                        translation(scale_vec( -1,origin ) ) ) ) );
-    }
-    // Flyaround mode:  Determine camera rotation movement first
-    var movement_plus  = [ self.mouse.from_center[0] + leeway, self.mouse.from_center[1] + leeway ];  // mouse_from_center[] is mouse position relative to canvas center;
-    var movement_minus = [ self.mouse.from_center[0] - leeway, self.mouse.from_center[1] - leeway ];  // leeway is a tolerance from the center before it starts moving.
+     if( self.mouse.anchor ) // Dragging mode: Is a mouse drag occurring?
+     {
+     var dragging_vector = subtract( self.mouse.from_center, self.mouse.anchor);           // Arcball camera: Spin the scene around the world origin on a user-determined axis.
+     if( length( dragging_vector ) > 0 )
+     self.graphicsState.camera_transform = mult( self.graphicsState.camera_transform,    // Post-multiply so we rotate the scene instead of the camera.
+     mult( translation(origin),
+     mult( rotation( .05 * length( dragging_vector ), dragging_vector[1], dragging_vector[0], 0 ),
+     translation(scale_vec( -1,origin ) ) ) ) );
+     }
+     // Flyaround mode:  Determine camera rotation movement first
+     var movement_plus  = [ self.mouse.from_center[0] + leeway, self.mouse.from_center[1] + leeway ];  // mouse_from_center[] is mouse position relative to canvas center;
+     var movement_minus = [ self.mouse.from_center[0] - leeway, self.mouse.from_center[1] - leeway ];  // leeway is a tolerance from the center before it starts moving.
 
-    for( var i = 0; looking && i < 2; i++ )			// Steer according to "mouse_from_center" vector, but don't start increasing until outside a leeway window from the center.
-    {
-        var velocity = ( ( movement_minus[i] > 0 && movement_minus[i] ) || ( movement_plus[i] < 0 && movement_plus[i] ) ) * degrees_per_frame;	// Use movement's quantity unless the &&'s zero it out
-        self.graphicsState.camera_transform = mult( rotation( velocity, i, 1-i, 0 ), self.graphicsState.camera_transform );			// On X step, rotate around Y axis, and vice versa.
-    }
-    self.graphicsState.camera_transform = mult( translation( scale_vec( meters_per_frame, thrust ) ), self.graphicsState.camera_transform );		// Now translation movement of camera, applied in local camera coordinate frame
-    */
+     for( var i = 0; looking && i < 2; i++ )			// Steer according to "mouse_from_center" vector, but don't start increasing until outside a leeway window from the center.
+     {
+     var velocity = ( ( movement_minus[i] > 0 && movement_minus[i] ) || ( movement_plus[i] < 0 && movement_plus[i] ) ) * degrees_per_frame;	// Use movement's quantity unless the &&'s zero it out
+     self.graphicsState.camera_transform = mult( rotation( velocity, i, 1-i, 0 ), self.graphicsState.camera_transform );			// On X step, rotate around Y axis, and vice versa.
+     }
+     self.graphicsState.camera_transform = mult( translation( scale_vec( meters_per_frame, thrust ) ), self.graphicsState.camera_transform );		// Now translation movement of camera, applied in local camera coordinate frame
+     */
 
     if( self.mouse.anchor ) // Dragging mode: Is a mouse drag occurring?
     {
@@ -215,7 +217,7 @@ Animation.prototype.display = function(time)
      Start coding down here!!!!
      **********************************/                                     // From this point on down it's just some examples for you -- feel free to comment it all out.
 
-    var ground_transform = this.draw_ground(model_transform);
+    this.draw_scene(model_transform);
     this.draw_bees(model_transform);
     this.draw_focus(model_transform);
     this.draw_bullets(model_transform);
@@ -225,11 +227,29 @@ Animation.prototype.display = function(time)
 
 // *******************************************************	
 // Custom
-// *******************************************************	
-// *** Ground ***
-// Draw ground. Return original matrix
+// *******************************************************
+// *** Scene ***
+Animation.prototype.draw_scene = function (model_transform) {
+    this.draw_ground(model_transform);
+    this.draw_sky(model_transform);
+
+    return model_transform;
+}
+
+// Sky 
+Animation.prototype.draw_sky = function (model_transform) {
+    var MAT = new Material(vec4(0.65, 0.67, 0.62, 1), 1, 0.5, 0.8, 40);
+
+    var sky_transform = model_transform;
+    sky_transform = mult(sky_transform, translation(0,1,0));
+    sky_transform = mult(sky_transform, scale(1000, 1000, 1000));
+    this.m_cube.draw(this.graphicsState, model_transform, MAT);
+    return model_transform;
+}
+
+// Ground
 Animation.prototype.draw_ground = function (model_transform) {
-    var MAT = new Material(Color(0.23, 0.28, 0.1, 1), 1, 1, 1, 40);
+    var MAT = new Material(vec4(0, 0, 0, 1), 0.9, 1, 1, 40, "desert_texture.jpg");
     var W = 100;
     var ground_transform = mult(model_transform, scale(W, 0.1, W));
 
@@ -237,6 +257,8 @@ Animation.prototype.draw_ground = function (model_transform) {
 
     return model_transform;
 };
+
+
 
 // Return sway transformation matrix
 Animation.prototype.sway = function (model_transform, period, degree) {
