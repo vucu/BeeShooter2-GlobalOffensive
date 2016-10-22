@@ -11,10 +11,12 @@ function World() {
 
         self.lastCreatedBullet = 0;
         self.lastCreatedBee = 0;
+        self.animation_time = 0;
     } ) ( this );
 }
 
 World.prototype.stepUpdate = function (currentTime) {
+    this.animation_time = Math.round(currentTime);
     for (var i=0; i<this.bullets.length; i++) {
         this.bullets[i].stepUpdate(currentTime);
     }
@@ -68,39 +70,27 @@ World.prototype.cleanup = function () {
 }
 
 // Create a bullet at Focus's position
-World.prototype.createBullet = function (creation_time) {
+World.prototype.createBullet = function () {
     var x = this.focus.x;
     var y = this.focus.y;
     var z = this.focus.z;
     var life = 10000;
 
-    var bullet = new Bullet(x,y,z,creation_time,life);
+    var bullet = new Bullet(x,y,z,this.animation_time,life);
     this.bullets.push(bullet);
 }
 
-// Test function
-World.prototype.createRandomBulletsInterval = function (current_time, period) {
-    var current_time_integer = Math.round(current_time);
-    var delta = Math.abs(current_time_integer - this.lastCreatedBullet);
-
-    // Create a random bullet each period
-    if ((current_time_integer % period < period/10)&&(delta>period/5)) {
-        this.createBullet(current_time_integer);
-        this.lastCreatedBullet = current_time_integer;
-    }
-}
-
-World.prototype.createRandomBee = function (creation_time) {
+World.prototype.createRandomBee = function () {
     var random_x = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
     var random_y = 20+Math.random()*40;
     var random_z = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
     var random_life = 5000+Math.random()*10000
-    var bee = new Bee(random_x,random_y,random_z,creation_time,10000);
+    var bee = new Bee(random_x,random_y,random_z,this.animation_time,10000);
     this.bees.push(bee);
 }
 
-World.prototype.createRandomBeesInterval = function (current_time, period) {
-    var current_time_integer = Math.round(current_time);
+World.prototype.createRandomBeesInterval = function (period) {
+    var current_time_integer = Math.round(this.animation_time);
     var delta = Math.abs(current_time_integer - this.lastCreatedBee);
 
     // Create a random bee each period

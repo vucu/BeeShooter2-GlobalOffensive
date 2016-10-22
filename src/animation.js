@@ -87,7 +87,7 @@ function Animation()    // A class.  An example of a displayable object that our
 // init_keys():  Define any extra keyboard shortcuts here
 Animation.prototype.init_keys = function()
 {
-    shortcut.add( "Space", function() { thrust[1] = -1; } );			shortcut.add( "Space", function() { thrust[1] =  0; }, {'type':'keyup'} );
+    shortcut.add( "Space", function() { world.createBullet() } );			shortcut.add( "Space", function() { world.createBullet() }, {'type':'keyup'} );
     shortcut.add( "z",     function() { thrust[1] =  1; } );			shortcut.add( "z",     function() { thrust[1] =  0; }, {'type':'keyup'} );
     shortcut.add( "w",     function() { world.focus.move(-1,0); } );			shortcut.add( "w",     function() { world.focus.move(-1,0); }, {'type':'keyup'} );
     shortcut.add( "a",     function() { world.focus.move(0,-1); } );			shortcut.add( "a",     function() { world.focus.move(0,-1); }, {'type':'keyup'} );
@@ -139,6 +139,15 @@ function update_camera( self, animation_delta_time )
     }
     self.graphicsState.camera_transform = mult( translation( scale_vec( meters_per_frame, thrust ) ), self.graphicsState.camera_transform );		// Now translation movement of camera, applied in local camera coordinate frame
     */
+
+    if( self.mouse.anchor ) // Dragging mode: Is a mouse drag occurring?
+    {
+        var dragging_vector = subtract( self.mouse.from_center, self.mouse.anchor);           // Arcball camera: Spin the scene around the world origin on a user-determined axis.
+        dragging_vector;
+        if( length( dragging_vector ) > 0 ) {
+            self.world.focus.move(dragging_vector[1]/50,dragging_vector[0]/50);
+        }
+    }
 
     var eye = vec3(0,1,0);
     var at = vec3(self.world.focus.x,self.world.focus.y,self.world.focus.z);
@@ -284,7 +293,7 @@ Animation.prototype.draw_bees = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.world.createRandomBeesInterval(animation_time_integer, 1000);
+    this.world.createRandomBeesInterval(1000);
     for (var i=0;i<this.world.bees.length;i++) {
         var bee = this.world.bees[i];
 
@@ -419,7 +428,6 @@ Animation.prototype.draw_bullets = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.world.createRandomBulletsInterval(animation_time_integer, 250);
     for (var i=0;i<this.world.bullets.length;i++) {
         var bullet = this.world.bullets[i];
         this.draw_bullet(model_transform, bullet.x0, bullet.y0, bullet.z0, bullet.creationTime, bullet.lifeTime);
