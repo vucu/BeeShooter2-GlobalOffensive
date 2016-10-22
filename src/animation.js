@@ -61,7 +61,6 @@ function Animation()    // A class.  An example of a displayable object that our
         self.graphicsState = new GraphicsState( translation(0, 0,-25), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
 
         // Custom
-        self.beeGenerator = new BeeGenerator();
         self.world = new World();
 
         self.context.render();
@@ -284,9 +283,9 @@ Animation.prototype.draw_bees = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.beeGenerator.createRandomBeesInterval(animation_time_integer, 1000);
-    for (var i=0;i<this.beeGenerator.bees.length;i++) {
-        var bee = this.beeGenerator.bees[i];
+    this.world.createRandomBeesInterval(animation_time_integer, 1000);
+    for (var i=0;i<this.world.bees.length;i++) {
+        var bee = this.world.bees[i];
 
         this.draw_bee(model_transform, bee.x0, bee.y0, bee.z0, bee.creationTime, bee.lifeTime);
     }
