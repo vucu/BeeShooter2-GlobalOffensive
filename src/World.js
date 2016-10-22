@@ -91,9 +91,9 @@ World.prototype.createRandomBulletsInterval = function (current_time, period) {
 }
 
 World.prototype.createRandomBee = function (creation_time) {
-    var random_x = (1-2*Math.round(Math.random()))*(5+Math.random()*10);
-    var random_y = 5+Math.random()*10;
-    var random_z = (1-2*Math.round(Math.random()))*(5+Math.random()*10);
+    var random_x = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
+    var random_y = 20+Math.random()*40;
+    var random_z = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
     var random_life = 5000+Math.random()*10000
     var bee = new Bee(random_x,random_y,random_z,creation_time,10000);
     this.bees.push(bee);
@@ -117,25 +117,49 @@ World.prototype.createRandomBeesInterval = function (current_time, period) {
 function Focus() {
     ( function init( self )
     {
-        self.d = 2;
+        self.d = 5;
         self.r = 1;
 
-        self.theta = 0;
-        self.phi = 0;
+        self.theta = 45;
+        self.phi = 45;
         self.calculateXYZ();
     } ) ( this );
 }
 
 Focus.prototype.calculateXYZ = function () {
-    this.x = this.d*Math.sin(this.theta)*Math.cos(this.phi);
-    this.y = this.d*Math.sin(this.theta)*Math.sin(this.phi);
-    this.z = this.d*Math.cos(this.phi);
+    this.x = this.d*Math.sin(radians(this.theta))*Math.cos(radians(this.phi));
+    this.y = this.d*Math.cos(radians(this.theta));
+    this.z = this.d*Math.sin(radians(this.theta))*Math.sin(radians(this.phi));
 }
 
 Focus.prototype.move = function (thetaChange, phiChange) {
+    var old_theta = this.theta;
+    var old_phi = this.phi ;
+
     this.theta = this.theta + thetaChange;
     this.phi = this.phi + phiChange;
+
     this.calculateXYZ();
+    if (this.theta<=0) {                 // Theta can only between 0 and 90 degrees
+        this.theta = old_theta;
+        this.phi = old_phi;
+        this.calculateXYZ();
+        return;
+    }
+    if (this.theta>=90) {
+        this.theta = old_theta;
+        this.phi = old_phi;
+        this.calculateXYZ();
+        return;
+    }
+    if (this.y<1) {                     // Focus can't go too low
+        this.theta = old_theta;
+        this.phi = old_phi;
+        this.calculateXYZ();
+        return;
+    }
+
+    console.log(this.x,this.y,this.z,this.x*this.x+this.y*this.y+this.z+this.z);
 }
 
 Focus.prototype.getRotation = function () {

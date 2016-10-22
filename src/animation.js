@@ -7,7 +7,15 @@
 
 "use strict"      // Selects strict javascript
 var canvas, canvas_size, shaders, gl = null, g_addrs,          // Global variables
-    thrust = vec3(), 	origin = vec3( 0, 10, -15 ), looking = false, prev_time = 0, animate = false, animation_time = 0, gouraud = false, color_normals = false;
+    thrust = vec3(),
+    origin = vec3( 0, 10, -15 ),
+    looking = false,
+    prev_time = 0,
+    animate = false,
+    animation_time = 0,
+    gouraud = false,
+    color_normals = false,
+    world;
 
 // *******************************************************
 // IMPORTANT -- Any new variables you define in the shader programs need to be in the list below, so their GPU addresses get retrieved.
@@ -62,6 +70,7 @@ function Animation()    // A class.  An example of a displayable object that our
 
         // Custom
         self.world = new World();
+        world = self.world;
 
         self.context.render();
     } ) ( this );
@@ -80,10 +89,10 @@ Animation.prototype.init_keys = function()
 {
     shortcut.add( "Space", function() { thrust[1] = -1; } );			shortcut.add( "Space", function() { thrust[1] =  0; }, {'type':'keyup'} );
     shortcut.add( "z",     function() { thrust[1] =  1; } );			shortcut.add( "z",     function() { thrust[1] =  0; }, {'type':'keyup'} );
-    shortcut.add( "w",     function() { thrust[2] =  1; } );			shortcut.add( "w",     function() { thrust[2] =  0; }, {'type':'keyup'} );
-    shortcut.add( "a",     function() { thrust[0] =  1; } );			shortcut.add( "a",     function() { thrust[0] =  0; }, {'type':'keyup'} );
-    shortcut.add( "s",     function() { thrust[2] = -1; } );			shortcut.add( "s",     function() { thrust[2] =  0; }, {'type':'keyup'} );
-    shortcut.add( "d",     function() { thrust[0] = -1; } );			shortcut.add( "d",     function() { thrust[0] =  0; }, {'type':'keyup'} );
+    shortcut.add( "w",     function() { world.focus.move(-1,0); } );			shortcut.add( "w",     function() { world.focus.move(-1,0); }, {'type':'keyup'} );
+    shortcut.add( "a",     function() { world.focus.move(0,-1); } );			shortcut.add( "a",     function() { world.focus.move(0,-1); }, {'type':'keyup'} );
+    shortcut.add( "s",     function() { world.focus.move(1,0); } );			shortcut.add( "s",     function() { world.focus.move(1,0); }, {'type':'keyup'} );
+    shortcut.add( "d",     function() { world.focus.move(0,1); } );			shortcut.add( "d",     function() { world.focus.move(0,1); }, {'type':'keyup'} );
     shortcut.add( "f",     function() { looking = !looking; } );
     shortcut.add( ",",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0,  1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( ".",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0, -1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
@@ -106,6 +115,7 @@ Animation.prototype.update_strings = function( debug_screen_strings )	      // S
 
 function update_camera( self, animation_delta_time )
 {
+    /*
     var leeway = 70,  degrees_per_frame = .0004 * animation_delta_time,
         meters_per_frame  =   .01 * animation_delta_time;
 
@@ -128,6 +138,13 @@ function update_camera( self, animation_delta_time )
         self.graphicsState.camera_transform = mult( rotation( velocity, i, 1-i, 0 ), self.graphicsState.camera_transform );			// On X step, rotate around Y axis, and vice versa.
     }
     self.graphicsState.camera_transform = mult( translation( scale_vec( meters_per_frame, thrust ) ), self.graphicsState.camera_transform );		// Now translation movement of camera, applied in local camera coordinate frame
+    */
+
+    var eye = vec3(0,1,0);
+    var at = vec3(self.world.focus.x,self.world.focus.y,self.world.focus.z);
+    var up = vec3(0,1,0);
+    self.graphicsState.camera_transform = lookAt(eye, at, up);
+
 }
 
 // A short function for testing.  It draws a lot of things at once.  See display() for a more basic look at how to draw one thing at a time.
@@ -189,11 +206,10 @@ Animation.prototype.display = function(time)
      Start coding down here!!!!
      **********************************/                                     // From this point on down it's just some examples for you -- feel free to comment it all out.
 
-    var ground_transform = this.draw_ground(mult(model_transform, translation(0, -5, 0)));
-    var tree_transform = this.draw_tree(mult(ground_transform, translation(2, 0, 2)));
-    this.draw_bees(tree_transform);
-    this.draw_focus(tree_transform);
-    this.draw_bullets(tree_transform);
+    var ground_transform = this.draw_ground(model_transform);
+    this.draw_bees(model_transform);
+    this.draw_focus(model_transform);
+    this.draw_bullets(model_transform);
 
     this.world.stepUpdate(this.graphicsState.animation_time);
 }
@@ -211,42 +227,6 @@ Animation.prototype.draw_ground = function (model_transform) {
     this.m_cube.draw(this.graphicsState, ground_transform, MAT);
 
     return model_transform;
-};
-
-// *** Tree ***
-
-// Draw tree. Return original matrix
-Animation.prototype.draw_tree = function (model_transform) {
-    // Draw trunk
-    var SEGMENT_COUNT = 8;
-    var current_trunk_transform = model_transform;
-    for (var i = 0; i < SEGMENT_COUNT; i++) {
-        current_trunk_transform = this.draw_trunk_segment(current_trunk_transform);
-    }
-
-    // Draw foliage
-    this.draw_foliage(current_trunk_transform);
-
-    return model_transform;
-};
-
-// Draw tree trunk segment. Return matrix at top of tree trunk
-Animation.prototype.draw_trunk_segment = function (model_transform) {
-    var W = 0.3;
-    var H = 1;
-    var MAT = new Material(Color(0.25, 0.15, 0, 1), 1, 1, 1, 40);
-    var SWAY_PERIOD = 7000;
-    var SWAY_DEGREE = 5;
-
-    var sway_transform = this.sway(model_transform, SWAY_PERIOD, SWAY_DEGREE);
-
-    var top_transform = mult(sway_transform, translation(0, H, 0));
-    var segment_transform = top_transform;
-    segment_transform = mult(segment_transform, translation(0, -H / 2, 0));
-    segment_transform = mult(segment_transform, scale(W, H, W));
-    this.m_cube.draw(this.graphicsState, segment_transform, MAT);
-
-    return top_transform;
 };
 
 // Return sway transformation matrix
@@ -267,15 +247,34 @@ Animation.prototype.sway = function (model_transform, period, degree) {
     return model_transform;
 };
 
-// Draw foliage. Return original matrix
-Animation.prototype.draw_foliage = function (model_transform) {
-    var R = 2;
-    var MAT = new Material(Color(0.5, 0.1, 0.1, 1), 1, 0.5, 0.5, 100);
 
-    var foliage_transform = mult(model_transform, scale(R, R, R));
-    foliage_transform = mult(foliage_transform, translation(0,R*0.45,0));
+// *** Focus ***
+// Draw a focus for sniper
+Animation.prototype.draw_focus = function (model_transform) {
+    var focus = this.world.focus;
 
-    this.m_sphere.draw(this.graphicsState, foliage_transform, MAT);
+    var MAT1 = new Material(Color(1, 0, 0, 1), 1, 1, 1, 255);
+    var MAT2 = new Material(Color(0, 1, 0, 1), 1, 1, 1, 255);
+
+    var focus_tranform = model_transform;
+    var rotation_info = focus.getRotation();
+    focus_tranform = mult(focus_tranform, translation(focus.x, focus.y, focus.z));
+    focus_tranform = mult(focus_tranform, rotation(rotation_info[0],rotation_info[1],rotation_info[2],rotation_info[3]));
+
+    var ring1_transform = focus_tranform;
+    ring1_transform = mult(ring1_transform, scale(focus.r, focus.r/8, focus.r));
+    ring1_transform = mult(ring1_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring1_transform, MAT1);
+
+    var ring2_transform = focus_tranform;
+    ring2_transform = mult(ring2_transform, scale(focus.r*0.7, focus.r/8, focus.r*0.7));
+    ring2_transform = mult(ring2_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring2_transform, MAT2);
+
+    var ring3_transform = focus_tranform;
+    ring3_transform = mult(ring3_transform, scale(focus.r*0.4, focus.r/8, focus.r*0.4));
+    ring3_transform = mult(ring3_transform, rotation(90,1,0,0));
+    this.m_cylinder.draw(this.graphicsState, ring3_transform, MAT1);
 
     return model_transform;
 }
@@ -414,38 +413,6 @@ Animation.prototype.draw_wing = function (model_transform) {
 
     return model_transform;
 };
-
-// *** Focus ***
-// Draw a focus for sniper
-Animation.prototype.draw_focus = function (model_transform) {
-    var focus = this.world.focus;
-    focus.move(1/100,1/100);
-
-    var MAT1 = new Material(Color(1, 0, 0, 1), 1, 1, 1, 255);
-    var MAT2 = new Material(Color(0, 1, 0, 1), 1, 1, 1, 255);
-
-    var focus_tranform = model_transform;
-    var rotation_info = focus.getRotation();
-    focus_tranform = mult(focus_tranform, translation(focus.x, focus.y, focus.z));
-    focus_tranform = mult(focus_tranform, rotation(rotation_info[0],rotation_info[1],rotation_info[2],rotation_info[3]));
-
-    var ring1_transform = focus_tranform;
-    ring1_transform = mult(ring1_transform, scale(focus.r, focus.r/8, focus.r));
-    ring1_transform = mult(ring1_transform, rotation(90,1,0,0));
-    this.m_cylinder.draw(this.graphicsState, ring1_transform, MAT1);
-
-    var ring2_transform = focus_tranform;
-    ring2_transform = mult(ring2_transform, scale(focus.r*0.7, focus.r/8, focus.r*0.7));
-    ring2_transform = mult(ring2_transform, rotation(90,1,0,0));
-    this.m_cylinder.draw(this.graphicsState, ring2_transform, MAT2);
-
-    var ring3_transform = focus_tranform;
-    ring3_transform = mult(ring3_transform, scale(focus.r*0.4, focus.r/8, focus.r*0.4));
-    ring3_transform = mult(ring3_transform, rotation(90,1,0,0));
-    this.m_cylinder.draw(this.graphicsState, ring3_transform, MAT1);
-
-    return model_transform;
-}
 
 // Draw bullets
 Animation.prototype.draw_bullets = function (model_transform) {
