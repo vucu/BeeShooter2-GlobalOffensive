@@ -30,7 +30,8 @@ function CURRENT_BASIS_IS_WORTH_SHOWING(self, model_transform) { self.m_axis.dra
 // *******************************************************
 // IMPORTANT -- In the line below, add the filenames of any new images you want to include for textures!
 
-var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif", "desert.gif", "desert_texture.jpg" ];
+var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif", "desert.gif", "desert_texture.jpg",
+"diamond_texture.png"];
 
 window.onload = function init() {	var anim = new Animation();	}   // Our whole program's entry point
 
@@ -262,7 +263,8 @@ Animation.prototype.draw_ground = function (model_transform) {
 
 // Artifact
 Animation.prototype.draw_artifact = function (model_transform) {
-    var MAT = new Material( Color( .9,.5, .9, 0.7 ), .01, .2, .4, 40 );
+    // var MAT = new Material( Color( .9,.5, .9, 0.7 ), .01, .2, .4, 40 );
+    var MAT = new Material( Color( 0, 0, 0, 0, 1 ), 1, 1, 1, 40, "diamond_texture.png" );
 
     var transform = mult(model_transform, translation(7,2,7));
     transform = mult(transform, rotation(this.graphicsState.animation_time/50,0,1,0));
