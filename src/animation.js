@@ -113,9 +113,9 @@ Animation.prototype.init_keys = function()
 
 Animation.prototype.update_strings = function( debug_screen_strings )	      // Strings that this displayable object (Animation) contributes to the UI:	
 {
-    debug_screen_strings.string_map["ammo"] = "Ammo: " + world.gun.bulletCount + "/" + world.gun.bulletCountMax;
-    debug_screen_strings.string_map["fire"] = "Debug: " + world.gun.state;
     debug_screen_strings.string_map["frame"] = "Framerate: " + Math.round(1/(this.animation_delta_time/1000), 1);
+    debug_screen_strings.string_map["bee"] = "Debug: " + world.beeGenerator.beeCount;
+    debug_screen_strings.string_map["ammo"] = "Ammo: " + world.gun.bulletCount + "/" + world.gun.bulletCountMax;
 }
 
 function update_camera( self, animation_delta_time )
@@ -212,7 +212,7 @@ Animation.prototype.display = function(time)
 Animation.prototype.draw_scene = function (model_transform) {
     this.draw_ground(model_transform);
     this.draw_background(model_transform);
-    this.draw_artifact(model_transform);
+    this.draw_artifacts(model_transform);
 
     return model_transform;
 }
@@ -277,18 +277,22 @@ Animation.prototype.draw_ground = function (model_transform) {
 };
 
 // Artifact
+Animation.prototype.draw_artifacts = function (model_transform) {
+    // x, y, z, scale
+    var info = [
+        40, 0, 13, 1
+
+    ]
+}
+
 Animation.prototype.draw_artifact = function (model_transform) {
-    // var MAT = new Material( Color( .9,.5, .9, 0.7 ), .01, .2, .4, 40 );
     var MAT = new Material( Color( 0, 0, 0, 0, 1 ), 1, 1, 1, 40, "diamond_texture.png" );
 
     var transform = mult(model_transform, translation(7,2,7));
-    transform = mult(transform, rotation(this.graphicsState.animation_time/50,0,1,0));
     this.m_diamond.draw(this.graphicsState, transform, MAT);
 
     return model_transform;
 };
-
-
 
 // Return sway transformation matrix
 Animation.prototype.sway = function (model_transform, period, degree) {
@@ -345,7 +349,6 @@ Animation.prototype.draw_bees = function (model_transform) {
     var animation_time_integer = Math.round(this.graphicsState.animation_time);
     if (animation_time_integer===0) return model_transform;
 
-    this.world.createRandomBeesInterval(1000);
     for (var i=0;i<this.world.bees.length;i++) {
         var bee = this.world.bees[i];
 
@@ -492,7 +495,7 @@ Animation.prototype.draw_bullet = function (model_transform, x0, y0, z0, creatio
     if (this.graphicsState.animation_time > creation_time+life_time) return model_transform;
 
     var R = 0.1;
-    var MAT = new Material(Color(0.5, 0.5, 0.5, 1), 1, 1, 1, 255);
+    var MAT = new Material(Color(0.1, 0.1, 0.1, 1), 1, 1, 1, 255);
 
     // calculate position
     var t = (this.graphicsState.animation_time - creation_time) / 100;

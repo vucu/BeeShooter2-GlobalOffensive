@@ -8,9 +8,9 @@ function World() {
         self.focus = new Focus();
         self.gun = new Gun();
         self.bullets = [];
+        self.beeGenerator = new BeeGenerator(1000);
         self.bees = [];
 
-        self.lastCreatedBullet = 0;
         self.lastCreatedBee = 0;
         self.animation_time = 0;
     } ) ( this );
@@ -27,6 +27,10 @@ World.prototype.stepUpdate = function (currentTime) {
     }
 
     this.gun.stepUpdate(currentTime);
+
+    this.beeGenerator.stepUpdate(currentTime);
+    if (this.beeGenerator.canCreate()) this.bees.push(this.beeGenerator.generateBee());
+
     this.detectCollision();
 }
 
@@ -69,6 +73,7 @@ World.prototype.cleanup = function () {
         }
     }
     this.bees = a;
+    this.beeGenerator.updateBeeCount(a.length);
 }
 
 // Create a bullet at Focus's position
@@ -85,26 +90,6 @@ World.prototype.createBullet = function () {
     this.bullets.push(bullet);
 }
 
-World.prototype.createRandomBee = function () {
-    var random_x = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
-    var random_y = 20+Math.random()*40;
-    var random_z = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
-    var random_life = 5000+Math.random()*10000
-    var bee = new Bee(random_x,random_y,random_z,this.animation_time,10000);
-    this.bees.push(bee);
-}
-
-World.prototype.createRandomBeesInterval = function (period) {
-    var current_time_integer = Math.round(this.animation_time);
-    var delta = Math.abs(current_time_integer - this.lastCreatedBee);
-
-    // Create a random bee each period
-    if ((current_time_integer % period < period/10)&&(delta>period/5)) {
-        this.createRandomBee(current_time_integer);
-        this.lastCreatedBee = current_time_integer;
-    }
-}
-
 //----------------------------------------------------------------------------
 //
 //  Focus
@@ -113,10 +98,10 @@ function Focus() {
     ( function init( self )
     {
         self.d = 5;
-        self.r = 1;
+        self.r = 0.25;
 
-        self.theta = 45;
-        self.phi = 45;
+        self.theta = 70;
+        self.phi = 90;
         self.calculateXYZ();
     } ) ( this );
 }
@@ -257,6 +242,60 @@ Bullet.prototype.stepUpdate = function(currentTime) {
     this.x = this.x0 + t*(this.x0);
     this.y = this.y0 + t*(this.y0);
     this.z = this.z0 + t*(this.z0);
+}
+
+//----------------------------------------------------------------------------
+//
+//  Bee Generator
+//
+// Contain the logic of creating bees
+function BeeGenerator(period) {
+    ( function init( self )
+    {
+        self.period = period;
+        self.maxBeeCount = 3;
+
+        self.timeSinceLastBee = 0;
+        self.animationTime = 0;
+        self.beeCount = 0;
+    } ) ( this );
+}
+
+BeeGenerator.prototype.canCreate = function () {
+    if (this.animationTime<this.timeSinceLastBee+this.period) return false;
+    if (this.beeCount>=this.maxBeeCount) return false;
+
+    return true;
+}
+
+BeeGenerator.prototype.setDifficulty = function (period, maxBeeCount) {
+    this.period = period;
+    this.maxBeeCount = maxBeeCount;
+}
+
+// Note: To avoid unfair difficulty, only generate bees in one plane (not 360 degrees)
+// Generate a random bee
+BeeGenerator.prototype.generateBee = function () {
+    if (!this.canCreate()) console.log("Warning: Can't generate bee");
+
+    var random_x = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
+    var random_y = 20+Math.random()*40;
+    var random_z = 60;
+    var random_life = 5000+Math.random()*10000;
+
+    var bee = new Bee(random_x,random_y,random_z,this.animationTime,random_life);
+    this.beeCount++;
+    this.timeSinceLastBee = this.animationTime;
+
+    return bee;
+}
+
+BeeGenerator.prototype.stepUpdate = function (current_time) {
+    this.animationTime = current_time;
+}
+
+BeeGenerator.prototype.updateBeeCount = function (count) {
+    this.beeCount = count;
 }
 
 //----------------------------------------------------------------------------
