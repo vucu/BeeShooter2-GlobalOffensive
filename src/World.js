@@ -2,35 +2,65 @@
 //
 //  World
 //
+
+// global
+var world;
+
 function World() {
     ( function init( self )
     {
-        self.focus = new Focus();
-        self.gun = new Gun();
-        self.bullets = [];
-        self.beeGenerator = new BeeGenerator(1000);
-        self.bees = [];
-
-        self.lastCreatedBee = 0;
+        world = self;
+        self.reset();
+        self.highScore = 0;
         self.animation_time = 0;
     } ) ( this );
 }
 
+World.prototype.reset = function () {
+    this.isGameOver = false;
+
+    this.focus = new Focus();
+    this.gun = new Gun();
+    this.bullets = [];
+    this.beeGenerator = new BeeGenerator();
+    this.bees = [];
+
+    this.score = 0;
+}
+
 World.prototype.stepUpdate = function (currentTime) {
     this.animation_time = Math.round(currentTime);
+    if (this.isGameOver) return;
+
+    // Step update child objects
     for (var i=0; i<this.bullets.length; i++) {
         this.bullets[i].stepUpdate(currentTime);
     }
-
     for (var i=0; i<this.bees.length; i++) {
         this.bees[i].stepUpdate(currentTime);
     }
-
     this.gun.stepUpdate(currentTime);
-
     this.beeGenerator.stepUpdate(currentTime);
+
+    // Generate bee if possible
     if (this.beeGenerator.canCreate()) this.bees.push(this.beeGenerator.generateBee());
 
+    // Update difficulty
+    if (this.score<200) {
+        this.beeGenerator.setDifficulty(2200, 1);
+    } else if (this.score<1000) {
+        this.beeGenerator.setDifficulty(2000, 2);
+    } else {
+        // Generate difficulty depend on score;
+        var factor = Math.floor(this.score / 500);
+
+        var p = Math.max(1000, 2000 - factor*200);
+        var c = Math.max(10, Math.floor(Math.sqrt(factor))-1);
+        this.beeGenerator.setDifficulty(2000, 3);
+    }
+
+
+    // Detect collision
     this.detectCollision();
 }
 
@@ -47,10 +77,21 @@ World.prototype.detectCollision = function () {
                 + (bullet.z-bee.z)*(bullet.z-bee.z);
             
             if (d<1) {
-                console.log("detected!")
                 bee.shouldBeDeleted = true;
                 bullet.shouldBeDeleted = true;
+                this.score+=100;
             }
+        }
+    }
+
+    // Collision between bee and player
+    for (var k=0; k<this.bees.length; k++) {
+        var bee = this.bees[k];
+        var d = bee.x*bee.x + bee.y*bee.y + bee.z*bee.z;
+
+        if (d<1) {
+            console.log("Game Over!");
+            this.gameOver();
         }
     }
 
@@ -78,6 +119,7 @@ World.prototype.cleanup = function () {
 
 // Create a bullet at Focus's position
 World.prototype.createBullet = function () {
+    if (this.isGameOver) return;
     if (!this.gun.canFire()) return;
     this.gun.fire();
 
@@ -88,6 +130,12 @@ World.prototype.createBullet = function () {
 
     var bullet = new Bullet(x,y,z,this.animation_time,life);
     this.bullets.push(bullet);
+}
+
+World.prototype.gameOver = function () {
+    this.isGameOver = true;
+    this.bees = [];
+    if (this.score>this.highScore) this.highScore = this.score;
 }
 
 //----------------------------------------------------------------------------
@@ -113,6 +161,8 @@ Focus.prototype.calculateXYZ = function () {
 }
 
 Focus.prototype.move = function (thetaChange, phiChange) {
+    if (world.isGameOver) return;
+
     var old_theta = this.theta;
     var old_phi = this.phi ;
 
@@ -249,10 +299,10 @@ Bullet.prototype.stepUpdate = function(currentTime) {
 //  Bee Generator
 //
 // Contain the logic of creating bees
-function BeeGenerator(period) {
+function BeeGenerator() {
     ( function init( self )
     {
-        self.period = period;
+        self.period = 1000;
         self.maxBeeCount = 3;
 
         self.timeSinceLastBee = 0;

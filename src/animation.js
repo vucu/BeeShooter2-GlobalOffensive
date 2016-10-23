@@ -103,7 +103,13 @@ Animation.prototype.init_keys = function()
     shortcut.add( ",",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0,  1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( ".",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0, -1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( "o",   ( function(self) { return function() { origin = vec3( mult_vec( inverse( self.graphicsState.camera_transform ), vec4(0,0,0,1) )                       ); } } ) (this) ) ;
-    shortcut.add( "r",   ( function() { world.gun.reload() }) );
+    shortcut.add( "r",   ( function() {
+        if (world.isGameOver) {
+            world.reset();
+        } else {
+            world.gun.reload();
+        }
+    }) );
     shortcut.add( "ALT+g", function() { gouraud = !gouraud; } );
     shortcut.add( "ALT+n", function() { color_normals = !color_normals;	} );
     shortcut.add( "ALT+a", function() { animate = !animate; } );
@@ -114,8 +120,18 @@ Animation.prototype.init_keys = function()
 Animation.prototype.update_strings = function( debug_screen_strings )	      // Strings that this displayable object (Animation) contributes to the UI:	
 {
     debug_screen_strings.string_map["frame"] = "Framerate: " + Math.round(1/(this.animation_delta_time/1000), 1);
-    debug_screen_strings.string_map["bee"] = "Debug: " + world.beeGenerator.beeCount;
-    debug_screen_strings.string_map["ammo"] = "Ammo: " + world.gun.bulletCount + "/" + world.gun.bulletCountMax;
+
+    if (!world.isGameOver) {
+        debug_screen_strings.string_map["highscore"] = "High Score: " + world.highScore;
+        debug_screen_strings.string_map["score"] = "Score: " + world.score;
+        debug_screen_strings.string_map["ammo"] = "Ammo: " + (world.gun.state==2 ? ("reloading...") : (world.gun.bulletCount + "/" + world.gun.bulletCountMax));
+    }
+    else {
+        debug_screen_strings.string_map["highscore"] = "to restart";
+        debug_screen_strings.string_map["score"] = "Game Over! Press R";
+        debug_screen_strings.string_map["ammo"] = "";
+
+    }
 }
 
 function update_camera( self, animation_delta_time )
@@ -214,6 +230,7 @@ Animation.prototype.draw_scene = function (model_transform) {
     this.draw_ground(model_transform);
     this.draw_background(model_transform);
     this.draw_artifacts(model_transform);
+    if (world.isGameOver) this.draw_game_over(model_transform);
 
     return model_transform;
 }
@@ -265,6 +282,16 @@ Animation.prototype.draw_background = function (model_transform) {
 
     return model_transform;
 };
+
+Animation.prototype.draw_game_over = function (model_transform) {
+    var MAT = new Material(Color(1, 0, 0, 0.5), 1, 1, 1, 255);
+    var transform = model_transform;
+    transform = mult(transform, scale(3,3,3));
+
+    this.m_sphere.draw(this.graphicsState, transform, MAT);
+
+    return model_transform;
+}
 
 // Ground
 Animation.prototype.draw_ground = function (model_transform) {
@@ -326,7 +353,7 @@ Animation.prototype.draw_artifacts = function (model_transform) {
 }
 
 Animation.prototype.draw_artifact = function (model_transform) {
-    var MAT = new Material( Color( 0, 0, 0, 0.5), 0.5, 0.5, 0.5, 40, "diamond_texture.png" );
+    var MAT = new Material( Color( 0, 0, 0, 1), 0.5, 0.5, 0.5, 40, "diamond_texture.png" );
 
     var transform = model_transform;
     this.m_diamond.draw(this.graphicsState, transform, MAT);
@@ -334,29 +361,10 @@ Animation.prototype.draw_artifact = function (model_transform) {
     return model_transform;
 };
 Animation.prototype.draw_artifact2 = function (model_transform) {
-    var MAT = new Material( Color( .9,.5, .9, 0.8 ), .5, .2, .4, 40 );
+    var MAT = new Material( Color( .9,.5, .9, 1 ), .5, .2, .4, 40 );
 
     var transform = model_transform;
     this.m_diamond.draw(this.graphicsState, transform, MAT);
-
-    return model_transform;
-};
-
-
-// Return sway transformation matrix
-Animation.prototype.sway = function (model_transform, period, degree) {
-    var speed = period / (4*degree);
-
-    var time = this.graphicsState.animation_time % period;
-    if (time >= 0 && time < period/4) {
-        model_transform = mult(model_transform, rotation(time/speed, 0, 0, 1));
-    } else if (time >= period/4 && time < period/2) {
-        model_transform = mult(model_transform, rotation(-(time - period/4) / speed + degree, 0, 0, 1));
-    } else if (time >= period/2 && time < period * 3/4) {
-        model_transform = mult(model_transform, rotation(-(time - period/2) / speed, 0, 0, 1));
-    } else {
-        model_transform = mult(model_transform, rotation((time - period*3/4) / speed - degree, 0, 0, 1));
-    }
 
     return model_transform;
 };
@@ -405,6 +413,24 @@ Animation.prototype.draw_bees = function (model_transform) {
     }
 }
 
+// Return sway transformation matrix
+Animation.prototype.sway = function (model_transform, period, degree) {
+    var speed = period / (4*degree);
+
+    var time = this.graphicsState.animation_time % period;
+    if (time >= 0 && time < period/4) {
+        model_transform = mult(model_transform, rotation(time/speed, 0, 0, 1));
+    } else if (time >= period/4 && time < period/2) {
+        model_transform = mult(model_transform, rotation(-(time - period/4) / speed + degree, 0, 0, 1));
+    } else if (time >= period/2 && time < period * 3/4) {
+        model_transform = mult(model_transform, rotation(-(time - period/2) / speed, 0, 0, 1));
+    } else {
+        model_transform = mult(model_transform, rotation((time - period*3/4) / speed - degree, 0, 0, 1));
+    }
+
+    return model_transform;
+};
+
 // Draw a bee flying from initial (x0,y0,z0) to (0,0,0)
 Animation.prototype.draw_bee = function (model_transform, x0, y0, z0, creation_time, life_time) {
     if (this.graphicsState.animation_time < creation_time) return model_transform;
@@ -431,6 +457,7 @@ Animation.prototype.draw_bee = function (model_transform, x0, y0, z0, creation_t
     var initial_axis = vec3(0,0,1); 					// Initial axix bee facing
     var destination_axix = cross(v0, initial_axis);
     var destination_angle = angle_vec(v0, initial_axis);
+    var bee_tranform = mult(bee_tranform, rotation(180, x0, y0, z0));
     var bee_tranform = mult(bee_tranform, rotation(-destination_angle, destination_axix[0], destination_axix[1], destination_axix[2]));
 
     // Scale bee
@@ -488,23 +515,39 @@ Animation.prototype.draw_leg = function (model_transform) {
 
     // Draw upperleg
     var upperleg_transform = mult(model_transform, rotation(ROTATION, 0, 0, 1));
-    upperleg_transform = this.sway(upperleg_transform, SWAY_PERIOD, SWAY_DEGREE);
+    upperleg_transform = this.sway(upperleg_transform, SWAY_PERIOD, SWAY_DEGREE); // Animate upper leg
+    var after_animation_transform = upperleg_transform;
+
     upperleg_transform = mult(upperleg_transform, translation(L / 2, 0, 0));
     upperleg_transform = mult(upperleg_transform, scale(L, W, W));
     this.m_cube.draw(this.graphicsState, upperleg_transform, MAT);
 
     // Draw lower leg
-    var lowerleg_transform = mult(model_transform, rotation(ROTATION, 0, 0, 1));
-    lowerleg_transform = this.sway(lowerleg_transform, SWAY_PERIOD, SWAY_DEGREE);
+    this.draw_lowerleg(after_animation_transform);
+
+    return model_transform;
+};
+
+Animation.prototype.draw_lowerleg = function (model_transform) {
+    var L = 3;
+    var W = 0.4;
+    var ROTATION = -66;
+
+    var SWAY_PERIOD = 2000;
+    var SWAY_DEGREE = 20;
+
+    var MAT = new Material(Color(0.2, 0.2, 0.2, 1), 1, 1, 1, 255);
+
+    var lowerleg_transform = model_transform;
     lowerleg_transform = mult(lowerleg_transform, translation(L, 0, 0));
-    lowerleg_transform = mult(lowerleg_transform, rotation(ROTATION * 1.1, 0, 0, 1));
+    lowerleg_transform = mult(lowerleg_transform, rotation(ROTATION, 0, 0, 1));
     lowerleg_transform = this.sway(lowerleg_transform, SWAY_PERIOD, SWAY_DEGREE);
     lowerleg_transform = mult(lowerleg_transform, translation(L / 2, 0, 0));
     lowerleg_transform = mult(lowerleg_transform, scale(L, W, W));
     this.m_cube.draw(this.graphicsState, lowerleg_transform, MAT);
 
     return model_transform;
-};
+}
 
 // Draw wing. Return original matrix
 Animation.prototype.draw_wing = function (model_transform) {
