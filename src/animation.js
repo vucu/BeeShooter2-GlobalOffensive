@@ -185,6 +185,7 @@ Animation.prototype.display = function(time)
     this.graphicsState.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
     this.graphicsState.lights.push( new Light( vec4( 0, 1000, 0, 1 ), Color( 1, 1, 1, 1 ), 100000 ) );
+    this.graphicsState.lights.push( new Light( vec4( 20, 20, 0, 1 ), Color( 1, 1, 1, 1 ), 100000 ) );
 
     // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
     // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
@@ -267,7 +268,7 @@ Animation.prototype.draw_background = function (model_transform) {
 
 // Ground
 Animation.prototype.draw_ground = function (model_transform) {
-    var MAT = new Material(vec4(0, 0, 0, 1), 0.9, 1, 1, 40, "desert_texture.jpg");
+    var MAT = new Material(Color(0, 0, 0, 1), 0.9, 1, 1, 40, "desert_texture.jpg");
     var W = 100;
     var ground_transform = mult(model_transform, scale(W, 0.1, W));
 
@@ -278,21 +279,69 @@ Animation.prototype.draw_ground = function (model_transform) {
 
 // Artifact
 Animation.prototype.draw_artifacts = function (model_transform) {
+    var transform = model_transform;
+    transform = mult(transform, translation(7, 1.5, 7));
+    transform = mult(transform, rotation(45, 0, 1, 0));
+    this.draw_artifact2(transform);
+
+    var transform = model_transform;
+    transform = mult(transform, translation(-7, 1.5, 7));
+    transform = mult(transform, rotation(45, 0, 1, 0));
+    this.draw_artifact2(transform);
+
+    var transform = model_transform;
+    transform = mult(transform, translation(7, 1.5, -7));
+    transform = mult(transform, rotation(45, 0, 1, 0));
+    this.draw_artifact2(transform);
+
+    var transform = model_transform;
+    transform = mult(transform, translation(-7, 1.5, -7));
+    transform = mult(transform, rotation(45, 0, 1, 0));
+    this.draw_artifact2(transform);
+
     // x, y, z, scale
     var info = [
-        40, 0, 13, 1
-
+        [-10, 3, 40, 5],
+        [-2, 1, 60, 2],
+        [7, 0, 20, 1],
+        [7, 1, 50, 1],
+        [-20, 3, 30, 3],
+        [20, 1, 30, 2],
     ]
+
+    for (var i=0;i<info.length;i++) {
+        var x = info[i][0];
+        var y = info[i][1];
+        var z = info[i][2];
+        var s = info[i][3];
+
+        var transform = model_transform;
+
+        transform = mult(transform, translation(x,y,z));
+        transform = mult(transform, scale(s,s,s));
+        this.draw_artifact(transform);
+    }
+
+    return model_transform;
 }
 
 Animation.prototype.draw_artifact = function (model_transform) {
-    var MAT = new Material( Color( 0, 0, 0, 0, 1 ), 1, 1, 1, 40, "diamond_texture.png" );
+    var MAT = new Material( Color( 0, 0, 0, 0.5), 0.5, 0.5, 0.5, 40, "diamond_texture.png" );
 
-    var transform = mult(model_transform, translation(7,2,7));
+    var transform = model_transform;
     this.m_diamond.draw(this.graphicsState, transform, MAT);
 
     return model_transform;
 };
+Animation.prototype.draw_artifact2 = function (model_transform) {
+    var MAT = new Material( Color( .9,.5, .9, 0.8 ), .5, .2, .4, 40 );
+
+    var transform = model_transform;
+    this.m_diamond.draw(this.graphicsState, transform, MAT);
+
+    return model_transform;
+};
+
 
 // Return sway transformation matrix
 Animation.prototype.sway = function (model_transform, period, degree) {

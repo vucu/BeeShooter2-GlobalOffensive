@@ -278,8 +278,8 @@ BeeGenerator.prototype.setDifficulty = function (period, maxBeeCount) {
 BeeGenerator.prototype.generateBee = function () {
     if (!this.canCreate()) console.log("Warning: Can't generate bee");
 
-    var random_x = (1-2*Math.round(Math.random()))*(20+Math.random()*40);
-    var random_y = 20+Math.random()*40;
+    var random_x = -20+Math.random()*40;
+    var random_y = 20+Math.random()*20;
     var random_z = 60;
     var random_life = 5000+Math.random()*10000;
 
