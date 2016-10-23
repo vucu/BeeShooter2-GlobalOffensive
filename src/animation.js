@@ -30,8 +30,10 @@ function CURRENT_BASIS_IS_WORTH_SHOWING(self, model_transform) { self.m_axis.dra
 // *******************************************************
 // IMPORTANT -- In the line below, add the filenames of any new images you want to include for textures!
 
-var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif", "desert.gif", "desert_texture.jpg",
-"diamond_texture.png"];
+var texture_filenames_to_load = [ "stars.png", "text.png", "earth.gif",
+    "skybox.png","skybox1.png","skybox2.png","skybox3.png","skybox4.png","skybox5.png","skybox6.png",
+    "desert.gif", "desert_texture.jpg",
+    "diamond_texture.png"];
 
 window.onload = function init() {	var anim = new Animation();	}   // Our whole program's entry point
 
@@ -181,7 +183,7 @@ Animation.prototype.display = function(time)
     // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
     this.graphicsState.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
-    this.graphicsState.lights.push( new Light( vec4( 0, 100, 0, 1 ), Color( 1, 1, 1, 1 ), 100000 ) );
+    this.graphicsState.lights.push( new Light( vec4( 0, 1000, 0, 1 ), Color( 1, 1, 1, 1 ), 100000 ) );
 
     // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
     // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
@@ -209,21 +211,70 @@ Animation.prototype.display = function(time)
 Animation.prototype.draw_scene = function (model_transform) {
     this.draw_ground(model_transform);
     this.draw_sky(model_transform);
+    this.draw_background(model_transform);
     this.draw_artifact(model_transform);
 
     return model_transform;
 }
 
-// Sky 
+// Sky
 Animation.prototype.draw_sky = function (model_transform) {
     var MAT = new Material(vec4(0.65, 0.67, 0.62, 1), 1, 0.5, 0.8, 40);
 
     var sky_transform = model_transform;
     sky_transform = mult(sky_transform, translation(0,1,0));
-    sky_transform = mult(sky_transform, scale(1000, 1000, 1000));
+    sky_transform = mult(sky_transform, scale(100, 100, 100));
     this.m_cube.draw(this.graphicsState, model_transform, MAT);
     return model_transform;
 }
+
+// Background
+Animation.prototype.draw_background = function (model_transform) {
+    var MAT1 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0, 1, "skybox1.png" );
+    var MAT2 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0 , 1, "skybox2.png" );
+    var MAT3 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0 , 1, "skybox3.png" );
+    var MAT4 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0 , 1, "skybox4.png" );
+    var MAT5 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0 , 1, "skybox5.png" );
+    var MAT6 = new Material( Color( 0, 0, 0, 0, 1 ), 1, 0, 0 , 1, "skybox6.png" );
+
+    var transform = model_transform;
+    transform = mult(transform, scale(800,800,800));
+    transform = mult(transform, translation(0,-0.5,0));
+
+    // Draw the faces of the skybox
+    var face1 = transform;
+    face1 = mult(face1, translation(0.49,0.5,0));
+    this.m_strip.draw(this.graphicsState, face1, MAT1);
+
+    var face2 = transform;
+    face2 = mult(face2, translation(0,0.5,0.49));
+    face2 = mult(face2, rotation(270,0,1,0));
+    this.m_strip.draw(this.graphicsState, face2, MAT2);
+
+    var face3 = transform;
+    face3 = mult(face3, translation(-0.49,0.5,0));
+    face3 = mult(face3, rotation(180,0,1,0));
+    this.m_strip.draw(this.graphicsState, face3, MAT3);
+
+    var face4 = transform;
+    face4 = mult(face4, translation(0,0.5,-0.49));
+    face4 = mult(face4, rotation(90,0,1,0));
+    this.m_strip.draw(this.graphicsState, face4, MAT4);
+
+    var face5 = transform;
+    face5 = mult(face5, translation(0,0.99,0));
+    face5 = mult(face5, rotation(90,0,0,1));
+    face5 = mult(face5, rotation(270,1,0,0));
+    this.m_strip.draw(this.graphicsState, face5, MAT5);
+
+    var face6 = transform;
+    face6 = mult(face6, translation(0,0,0));
+    face6 = mult(face6, rotation(270,0,0,1));
+    face6 = mult(face6, rotation(90,1,0,0));
+    this.m_strip.draw(this.graphicsState, face6, MAT6);
+
+    return model_transform;
+};
 
 // Ground
 Animation.prototype.draw_ground = function (model_transform) {
@@ -247,6 +298,7 @@ Animation.prototype.draw_artifact = function (model_transform) {
 
     return model_transform;
 };
+
 
 
 // Return sway transformation matrix
