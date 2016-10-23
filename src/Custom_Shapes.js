@@ -42,3 +42,40 @@ function Shape_From_File( filename, points_transform )
 		OBJ.downloadMeshes( { 'mesh' : filename }, (function(self) { return self.webGLStart.bind(self) }(this) ) );
 	}
 inherit( Shape_From_File, Shape );
+
+Make_Shape_Subclass( "Diamond", Shape );
+Diamond.prototype.populate = function( recipient, points_transform = mat4() )
+{
+	var offset = recipient.positions.length;
+	var index_offset = recipient.indices.length;
+
+	recipient.positions.push( vec3(1,0,0), vec3(0,2,0), vec3(0,0,1) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,2,0), vec3(0,0,1) );
+	recipient.positions.push( vec3(1,0,0), vec3(0,0,-1), vec3(0,2,0) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,0,-1), vec3(0,2,0) );
+
+	recipient.positions.push( vec3(0,0,1), vec3(0,-2,0), vec3(1,0,0) );
+	recipient.positions.push( vec3(0,0,1), vec3(0,-2,0), vec3(-1,0,0) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,-2,0), vec3(0,0,-1) );
+	recipient.positions.push( vec3(1,0,0), vec3(0,-2,0), vec3(0,0,-1) );
+
+
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+
+
+	recipient.indices.push( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 );
+	recipient.flat_shade(offset, index_offset, true);
+
+	for( var i = index_offset; i < recipient.indices.length; i++ )
+		recipient.indices[i] += offset;
+
+	for( var i = offset; i < recipient.positions.length; i++ )
+		recipient.positions[i] = vec3( mult_vec( points_transform, vec4( recipient.positions[ i ], 1 ) ) );
+};

@@ -66,6 +66,7 @@ function Animation()    // A class.  An example of a displayable object that our
         self.m_obj         = new Shape_From_File( "teapot.obj", scale( .1, .1, .1 ) );
         self.m_sub         = new Subdivision_Sphere( 4, true );
         self.m_axis        = new Axis();
+        self.m_diamond     = new Diamond();
 
 // 1st parameter is our starting camera matrix.  2nd parameter is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
         self.graphicsState = new GraphicsState( translation(0, 0,-25), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
@@ -232,6 +233,7 @@ Animation.prototype.display = function(time)
 Animation.prototype.draw_scene = function (model_transform) {
     this.draw_ground(model_transform);
     this.draw_sky(model_transform);
+    this.draw_artifact(model_transform);
 
     return model_transform;
 }
@@ -258,6 +260,16 @@ Animation.prototype.draw_ground = function (model_transform) {
     return model_transform;
 };
 
+// Artifact
+Animation.prototype.draw_artifact = function (model_transform) {
+    var MAT = new Material( Color( .9,.5, .9, 0.7 ), .01, .2, .4, 40 );
+
+    var transform = mult(model_transform, translation(7,2,7));
+    transform = mult(transform, rotation(this.graphicsState.animation_time/50,0,1,0));
+    this.m_diamond.draw(this.graphicsState, transform, MAT);
+
+    return model_transform;
+};
 
 
 // Return sway transformation matrix

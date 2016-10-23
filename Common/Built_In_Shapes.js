@@ -142,7 +142,7 @@ inherit( Triangle_Fan, Shape );
 // Unlike Patch(), creates a regular polygon using the minimal number of triangles
 
 Make_Shape_Subclass( "N_Polygon", Triangle_Fan );
-	N_Polygon.prototype.populate = function( recipient, n, points_transform = mat4() )	
+	N_Polygon.prototype.populate = function( recipient, n, points_transform = mat4() )
     {	 
       var offset = recipient.positions.length;
       for( var i = 0; i < n; i++ )     this.add_fan_point( recipient, offset, vec3( Math.cos( i/n * 2*Math.PI ), Math.sin( i/n * 2*Math.PI ), 0 ), vec3(0, 0, 1), vec2( .5 + .5 * Math.cos( i/n * 2*Math.PI ), .5 + .5 * Math.sin( i/n * 2*Math.PI ) ) ); 
@@ -459,5 +459,51 @@ inherit( Subdivision_Sphere, Shape );
         }
       if( flat_shading ) this.flat_shade( offset, index_offset, false );
 		};
-    
-    
+
+// *********** CUSTOM SHAPES ***********
+
+function crystal( points_transform )
+{
+	Shape.call(this);
+	if( !arguments.length) return;
+	this.populate( this, points_transform );
+	this.init_buffers();
+}
+inherit(crystal, Shape);
+
+crystal.prototype.populate = function( recipient, points_transform = mat4())
+{
+	var offset = recipient.positions.length;
+	var index_offset = recipient.indices.length;
+
+	recipient.positions.push( vec3(1,0,0), vec3(0,1,0), vec3(0,0,1) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,1,0), vec3(0,0,1) );
+	recipient.positions.push( vec3(1,0,0), vec3(0,0,-1), vec3(0,1,0) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,0,-1), vec3(0,1,0) );
+
+	recipient.positions.push( vec3(0,0,1), vec3(0,-2,0), vec3(1,0,0) );
+	recipient.positions.push( vec3(0,0,1), vec3(0,-2,0), vec3(-1,0,0) );
+	recipient.positions.push( vec3(-1,0,0), vec3(0,-2,0), vec3(0,0,-1) );
+	recipient.positions.push( vec3(1,0,0), vec3(0,-2,0), vec3(0,0,-1) );
+
+
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+	recipient.texture_coords.push( vec2(0,0), vec2(0,1), vec2(1,0) );
+
+
+	recipient.indices.push( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12,13,14,15,16,17,18,19,20,21,22,23 );
+	// recipient.flat_shade(offset, index_offset, true);
+
+	for( var i = index_offset; i < recipient.indices.length; i++ )
+		recipient.indices[i] += offset;
+
+	for( var i = offset; i < recipient.positions.length; i++ )
+		recipient.positions[i] = vec3( mult_vec( points_transform, vec4( recipient.positions[ i ], 1 ) ) );
+};
+
