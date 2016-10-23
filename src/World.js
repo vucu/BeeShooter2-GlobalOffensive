@@ -6,6 +6,7 @@ function World() {
     ( function init( self )
     {
         self.focus = new Focus();
+        self.gun = new Gun();
         self.bullets = [];
         self.bees = [];
 
@@ -25,6 +26,7 @@ World.prototype.stepUpdate = function (currentTime) {
         this.bees[i].stepUpdate(currentTime);
     }
 
+    this.gun.stepUpdate(currentTime);
     this.detectCollision();
 }
 
@@ -71,6 +73,9 @@ World.prototype.cleanup = function () {
 
 // Create a bullet at Focus's position
 World.prototype.createBullet = function () {
+    if (!this.gun.canFire()) return;
+    this.gun.fire();
+
     var x = this.focus.x;
     var y = this.focus.y;
     var z = this.focus.z;
@@ -164,6 +169,68 @@ Focus.prototype.getRotation = function () {
     rotation_info.push(destination_axix[2]);
 
     return rotation_info;
+}
+
+//----------------------------------------------------------------------------
+//
+//  Gun
+//
+// Gun determine whether it can fire or not
+function Gun() {
+    ( function init( self )
+    {
+        self.bulletCountMax = 30;
+        self.timeBetweenBullet = 100;
+        self.timeReload = 2500;
+
+        // State: 0: Can fire, 1: cooldown between bullets, 2: reloading
+        self.state = 0;
+        self.bulletCount = self.bulletCountMax;
+        self.timeSinceLastBullet = 0;
+        self.timeSinceReload = 0;
+
+        self.animationTime = 0;
+    } ) ( this );
+}
+
+Gun.prototype.reload = function () {
+    if (this.state==2) return;
+
+    this.timeSinceReload = this.animationTime;
+    this.state = 2;
+}
+
+Gun.prototype.canFire = function () {
+    if (this.state===0) return true;
+
+    return false;
+}
+
+Gun.prototype.fire = function () {
+    if (!this.canFire()) console.log("Warning: Gun can't fire");
+
+    this.bulletCount = this.bulletCount-1;
+    if (this.bulletCount<=0) {
+        this.reload();
+        return;
+    }
+
+    this.timeSinceLastBullet = this.animationTime;
+    this.state = 1;
+}
+
+Gun.prototype.stepUpdate = function (currentTime) {
+    this.animationTime = currentTime;
+
+    if (this.state==1) {
+        if (this.animationTime>this.timeSinceLastBullet+this.timeBetweenBullet) this.state = 0;
+    } else if (this.state==2) {
+        if (this.animationTime>this.timeSinceReload+this.timeReload)
+        {
+            this.bulletCount = this.bulletCountMax;
+            this.state = 0;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------

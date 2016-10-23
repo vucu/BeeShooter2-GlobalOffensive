@@ -103,7 +103,7 @@ Animation.prototype.init_keys = function()
     shortcut.add( ",",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0,  1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( ".",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0, -1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( "o",   ( function(self) { return function() { origin = vec3( mult_vec( inverse( self.graphicsState.camera_transform ), vec4(0,0,0,1) )                       ); } } ) (this) ) ;
-    shortcut.add( "r",   ( function(self) { return function() { self.graphicsState.camera_transform = mat4(); }; } ) (this) );
+    shortcut.add( "r",   ( function() { world.gun.reload() }) );
     shortcut.add( "ALT+g", function() { gouraud = !gouraud; } );
     shortcut.add( "ALT+n", function() { color_normals = !color_normals;	} );
     shortcut.add( "ALT+a", function() { animate = !animate; } );
@@ -113,8 +113,9 @@ Animation.prototype.init_keys = function()
 
 Animation.prototype.update_strings = function( debug_screen_strings )	      // Strings that this displayable object (Animation) contributes to the UI:	
 {
+    debug_screen_strings.string_map["ammo"] = "Ammo: " + world.gun.bulletCount + "/" + world.gun.bulletCountMax;
+    debug_screen_strings.string_map["fire"] = "Debug: " + world.gun.state;
     debug_screen_strings.string_map["frame"] = "Framerate: " + Math.round(1/(this.animation_delta_time/1000), 1);
-    debug_screen_strings.string_map["animate"] = "Animation " + (animate ? "on" : "off") ;
 }
 
 function update_camera( self, animation_delta_time )
@@ -210,21 +211,9 @@ Animation.prototype.display = function(time)
 // *** Scene ***
 Animation.prototype.draw_scene = function (model_transform) {
     this.draw_ground(model_transform);
-    this.draw_sky(model_transform);
     this.draw_background(model_transform);
     this.draw_artifact(model_transform);
 
-    return model_transform;
-}
-
-// Sky
-Animation.prototype.draw_sky = function (model_transform) {
-    var MAT = new Material(vec4(0.65, 0.67, 0.62, 1), 1, 0.5, 0.8, 40);
-
-    var sky_transform = model_transform;
-    sky_transform = mult(sky_transform, translation(0,1,0));
-    sky_transform = mult(sky_transform, scale(100, 100, 100));
-    this.m_cube.draw(this.graphicsState, model_transform, MAT);
     return model_transform;
 }
 
