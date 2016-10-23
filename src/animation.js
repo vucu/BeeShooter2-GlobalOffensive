@@ -11,7 +11,7 @@ var canvas, canvas_size, shaders, gl = null, g_addrs,          // Global variabl
     origin = vec3( 0, 10, -15 ),
     looking = false,
     prev_time = 0,
-    animate = false,
+    animate = true,
     animation_time = 0,
     gouraud = false,
     color_normals = false,
@@ -111,10 +111,8 @@ Animation.prototype.init_keys = function()
 
 Animation.prototype.update_strings = function( debug_screen_strings )	      // Strings that this displayable object (Animation) contributes to the UI:	
 {
-    debug_screen_strings.string_map["time"]    = "Animation Time: " + this.graphicsState.animation_time/1000 + "s";
-    debug_screen_strings.string_map["basis"]   = "Showing basis: " + this.m_axis.basis_selection;
+    debug_screen_strings.string_map["frame"] = "Framerate: " + Math.round(1/(this.animation_delta_time/1000), 1);
     debug_screen_strings.string_map["animate"] = "Animation " + (animate ? "on" : "off") ;
-    debug_screen_strings.string_map["thrust"]  = "Thrust: " + thrust;
 }
 
 function update_camera( self, animation_delta_time )
@@ -158,29 +156,6 @@ function update_camera( self, animation_delta_time )
     var up = vec3(0,1,0);
     self.graphicsState.camera_transform = lookAt(eye, at, up);
 
-}
-
-// A short function for testing.  It draws a lot of things at once.  See display() for a more basic look at how to draw one thing at a time.
-Animation.prototype.test_lots_of_shapes = function( model_transform )
-{
-    var shapes = [ this.m_prism, this.m_capped, this.m_cone, this.m_sub, this.m_sphere, this.m_obj, this.m_torus ];   // Randomly include some shapes in a list
-    var tex_names = [ undefined, "stars.png", "earth.gif" ]
-
-    for( var i = 3; i < shapes.length + 3; i++ )      // Iterate through that list
-    {
-        var spiral_transform = model_transform, funny_number = this.graphicsState.animation_time/20 + (i*i)*Math.cos( this.graphicsState.animation_time/2000 );
-        spiral_transform = mult( spiral_transform, rotation( funny_number, i%3 == 0, i%3 == 1, i%3 == 2 ) );
-        for( var j = 1; j < 4; j++ )                                                                                  // Draw each shape 4 times, in different places
-        {
-            var mat = new Material( Color( i % j / 5, j % i / 5, i*j/25, 1 ), .3,  1,  1, 40, tex_names[ (i*j) % tex_names.length ] )       // Use a random material
-            // The draw call:
-            shapes[i-3].draw( this.graphicsState, spiral_transform, mat );			                        //  Draw the current shape in the list, passing in the current matrices
-            spiral_transform = mult( spiral_transform, rotation( 63, 3, 5, 7 ) );                       //  Move a little bit before drawing the next one
-            spiral_transform = mult( spiral_transform, translation( 0, 5, 0) );
-        }
-        model_transform = mult( model_transform, translation( 0, -3, 0 ) );
-    }
-    return model_transform;
 }
 
 // *******************************************************	

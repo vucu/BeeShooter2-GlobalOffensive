@@ -92,7 +92,7 @@ function GL_Context( canvas_id, background_color )
 // *******************************************************
 // Debug_Screen - An example of a displayable object that our class GL_Context can manage.  Displays the text of the user interface.
 function Debug_Screen()	
-{	this.string_map = { };	this.m_text = new Text_Line( 20 ); 		this.start_index = 0;	this.tick = 0; 	this.visible = false;
+{	this.string_map = { };	this.m_text = new Text_Line( 20 ); 		this.start_index = 0;	this.tick = 0; 	this.visible = true;
 	this.graphicsState = new GraphicsState( mat4(), mat4(), 0 );
 }
 
@@ -108,24 +108,12 @@ function Debug_Screen()
 		    model_transform = mult( model_transform, scale( 1, .075, .05) );
 		
 		var strings = Object.keys( this.string_map );
-		
+
 		for( var i = 0, idx = this.start_index; i < 4 && i < strings.length; i++, idx = (idx + 1) % strings.length )
 		{
 			this.m_text.set_string( this.string_map[ strings[idx] ] );
-			this.m_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );		// Comment this out to not display any strings on the UI			
+			this.m_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );		// Comment this out to not display any strings on the UI
 			model_transform = mult( model_transform, translation( 0, 1, 0 ) );
-		}
-		
-		model_transform     = mult( model_transform, translation( 0, 20, -32 ) );
-		this.m_text.set_string( "Controls:" );
-		this.m_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );		// Comment this out to not display any strings on the UI
-		
-		var key_combinations = Object.keys( shortcut.all_shortcuts );
-		for( var i = 0; i < key_combinations.length; i++ )
-		{
-			model_transform = mult( model_transform, translation( 0, -1, 0 ) );				
-			this.m_text.set_string( key_combinations[i] );
-			this.m_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );		// Comment this out to not display any controls on the UI
 		}
 	}
 
@@ -138,8 +126,7 @@ function Debug_Screen()
 
 	Debug_Screen.prototype.update_strings = function( debug_screen_object ) 		// Strings that this displayable object (Debug_Screen) contributes to the UI:
 	{
-		debug_screen_object.string_map["tick"] = "Frame: " + this.tick++;
-		debug_screen_object.string_map["text_scroll_index"] = "Text scroll index: " + this.start_index;
+
 	}
   
 window.requestAnimFrame = (function() {						// When called, queue up this browser's version of requestAnimationFrame()
