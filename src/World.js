@@ -12,12 +12,14 @@ function World() {
         world = self;
         self.reset();
         self.highScore = 0;
+
         self.animation_time = 0;
     } ) ( this );
 }
 
 World.prototype.reset = function () {
     this.isGameOver = false;
+    this.isGodMode = false;
 
     this.focus = new Focus();
     this.gun = new Gun();
@@ -133,6 +135,8 @@ World.prototype.createBullet = function () {
 }
 
 World.prototype.gameOver = function () {
+    if (world.isGodMode) return; // Never game over in god mode
+
     this.isGameOver = true;
     this.bees = [];
     if (this.score>this.highScore) this.highScore = this.score;

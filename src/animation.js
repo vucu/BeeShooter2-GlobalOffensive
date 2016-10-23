@@ -93,13 +93,19 @@ function Animation()    // A class.  An example of a displayable object that our
 // init_keys():  Define any extra keyboard shortcuts here
 Animation.prototype.init_keys = function()
 {
-    shortcut.add( "Space", function() { world.createBullet() } );			shortcut.add( "Space", function() { world.createBullet() }, {'type':'keyup'} );
+    shortcut.add( "Space", function() {
+        world.createBullet();
+     } );
+    shortcut.add( "Space", function() {
+        world.createBullet();
+    }, {'type':'keyup'} );
     shortcut.add( "z",     function() { thrust[1] =  1; } );			shortcut.add( "z",     function() { thrust[1] =  0; }, {'type':'keyup'} );
     shortcut.add( "w",     function() { world.focus.move(-1,0); } );			shortcut.add( "w",     function() { world.focus.move(-1,0); }, {'type':'keyup'} );
     shortcut.add( "a",     function() { world.focus.move(0,-1); } );			shortcut.add( "a",     function() { world.focus.move(0,-1); }, {'type':'keyup'} );
     shortcut.add( "s",     function() { world.focus.move(1,0); } );			shortcut.add( "s",     function() { world.focus.move(1,0); }, {'type':'keyup'} );
     shortcut.add( "d",     function() { world.focus.move(0,1); } );			shortcut.add( "d",     function() { world.focus.move(0,1); }, {'type':'keyup'} );
     shortcut.add( "f",     function() { looking = !looking; } );
+    shortcut.add( "g",     function() { world.isGodMode = !world.isGodMode; } );
     shortcut.add( ",",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0,  1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( ".",   ( function(self) { return function() { self.graphicsState.camera_transform = mult( rotation( 3, 0, 0, -1 ), self.graphicsState.camera_transform       ); } } ) (this) ) ;
     shortcut.add( "o",   ( function(self) { return function() { origin = vec3( mult_vec( inverse( self.graphicsState.camera_transform ), vec4(0,0,0,1) )                       ); } } ) (this) ) ;
@@ -121,16 +127,18 @@ Animation.prototype.update_strings = function( debug_screen_strings )	      // S
 {
     debug_screen_strings.string_map["frame"] = "Framerate: " + Math.round(1/(this.animation_delta_time/1000), 1);
 
-    if (!world.isGameOver) {
+    if (world.isGodMode) {
+        debug_screen_strings.string_map["highscore"] = "God Mode On";
+        debug_screen_strings.string_map["score"] = "Score: " + world.score;
+        debug_screen_strings.string_map["ammo"] = "Ammo: " + (world.gun.state==2 ? ("reloading...") : (world.gun.bulletCount + "/" + world.gun.bulletCountMax));
+    } else if (!world.isGameOver) {
         debug_screen_strings.string_map["highscore"] = "High Score: " + world.highScore;
         debug_screen_strings.string_map["score"] = "Score: " + world.score;
         debug_screen_strings.string_map["ammo"] = "Ammo: " + (world.gun.state==2 ? ("reloading...") : (world.gun.bulletCount + "/" + world.gun.bulletCountMax));
-    }
-    else {
-        debug_screen_strings.string_map["highscore"] = "to restart";
-        debug_screen_strings.string_map["score"] = "Game Over! Press R";
-        debug_screen_strings.string_map["ammo"] = "";
-
+    }  else {
+        debug_screen_strings.string_map["highscore"] = "Press R to restart";
+        debug_screen_strings.string_map["score"] = "Game Over!";
+        debug_screen_strings.string_map["ammo"] = ""
     }
 }
 
