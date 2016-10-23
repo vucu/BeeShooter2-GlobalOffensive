@@ -19,5 +19,5 @@ Requirements:
 * Real-time speed: All animation and game logic is based on animation_time
 * Display the frame rate: On bottom left corner
 
-Advanced concept:
-Collision detection: Between bullets and bees
+Advanced concept:  
+* Collision detection: Between bullets and bees
